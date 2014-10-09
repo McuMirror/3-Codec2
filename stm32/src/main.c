@@ -140,14 +140,14 @@ int main(int argc, char *argv[]) {
     /* File I/O test for profiling or (with #define DUMP)
        dumping states for optimisation and tiuning */
 
-    c2demo(CODEC2_MODE_1600, "stm_in.raw", "stm_out.raw");
+    c2demo(CODEC2_MODE_1200, "stm_in.raw", "stm_out.raw");
 
     printf("Starting c2 speed test\n");
     
     /* Another test of execution speed. Look at PD13 with a
        oscilliscope.  On time is enc, off is dec */
 
-    c2speedtest(CODEC2_MODE_1600, "stm_in.raw");
+    c2speedtest(CODEC2_MODE_1200, "stm_in.raw");
 
     printf("Finished\n");
 

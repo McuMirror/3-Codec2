@@ -38,10 +38,12 @@ void gdb_stdio_fclose(FILE *file);
 int gdb_stdio_fwrite(void *ptr, int size, int nmemb, FILE *file);
 int gdb_stdio_fread(void *ptr, int size, int nmemb, FILE *file);
 
+#if 0
 #define printf gdb_stdio_printf
 #define fopen gdb_stdio_fopen
 #define fclose gdb_stdio_fclose
 #define fread gdb_stdio_fread
 #define fwrite gdb_stdio_fwrite
+#endif
 
 #endif

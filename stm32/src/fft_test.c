@@ -92,6 +92,7 @@
 extern float32_t testInput_f32_10khz[TEST_LENGTH_SAMPLES]; 
 static float32_t testOutput[TEST_LENGTH_SAMPLES/2]; 
 static float32_t kiss_complex_out[TEST_LENGTH_SAMPLES]; 
+static float32_t arm_fft_tmp[TEST_LENGTH_SAMPLES];
  
 /* ------------------------------------------------------------------ 
 * Global variables for FFT Bin Example 
@@ -118,48 +119,65 @@ int main(void)
         unsigned int fft_start, kiss_fft_start;
         kiss_fft_cfg fft_fwd_cfg;
 
-        SystemInit();
         machdep_timer_init();
+
         fft_fwd_cfg = kiss_fft_alloc(fftSize, 0, NULL, NULL);
-        kiss_fft_start = machdep_timer_sample();	
-        kiss_fft(fft_fwd_cfg, (kiss_fft_cpx *)testInput_f32_10khz, 
-                 (kiss_fft_cpx *)kiss_complex_out);
-        machdep_timer_sample_and_log(kiss_fft_start, "  kiss_fft");     
- 
-	status = ARM_MATH_SUCCESS; 
-	 
+
 	/* Initialize the CFFT/CIFFT module */  
 	status = arm_cfft_radix2_init_f32(&S, fftSize, ifftFlag, doBitReverse); 	 
 
-	/* Process the data through the CFFT/CIFFT module */ 
-        fft_start = machdep_timer_sample();	
-        arm_cfft_radix2_f32(&S, testInput_f32_10khz); 
-        machdep_timer_sample_and_log(fft_start, "  fft");     
-        machdep_timer_print_logged_samples();
 
-	/* Process the data through the Complex Magnitude Module for  
-	calculating the magnitude at each bin */ 
-	arm_cmplx_mag_f32(testInput_f32_10khz, testOutput,fftSize);  
-	 
-	/* Calculates maxValue and returns corresponding BIN value */ 
-	arm_max_f32(testOutput, fftSize, &maxValue, &testIndex); 
-	 
-	if(testIndex !=  refIndex) 
-	{ 
-		status = ARM_MATH_TEST_FAILURE; 
-	} 
-	 
-	/* ---------------------------------------------------------------------- 
-	** Loop here if the signals fail the PASS check. 
-	** This denotes a test failure 
-	** ------------------------------------------------------------------- */ 
-	 
-	if( status != ARM_MATH_SUCCESS) 
-	{ 
-		while(1); 
-	} 
+	for (;;) {
+		kiss_fft_start = machdep_timer_sample();	
+		kiss_fft(fft_fwd_cfg, (kiss_fft_cpx *)testInput_f32_10khz, 
+				(kiss_fft_cpx *)kiss_complex_out);
+		machdep_timer_sample_and_log(kiss_fft_start, "  kiss_fft");
 
-    while(1);                             /* main function does not return */
+		arm_cmplx_mag_f32(kiss_complex_out, testOutput, fftSize);
+		arm_max_f32(testOutput, fftSize, &maxValue,
+				&testIndex); 
+
+		if (testIndex != refIndex) {
+			printf("testIndex: %u (maxValue: %f), refIndex: %u\n", (unsigned)testIndex, maxValue, (unsigned)refIndex);
+			status = ARM_MATH_TEST_FAILURE; 
+		}
+		status = ARM_MATH_SUCCESS; 
+
+		if (status != ARM_MATH_SUCCESS) { 
+			printf("kiss_fft test failed\n");
+			for (;;) {
+				;
+			}
+		} 
+
+		/* Process the data through the CFFT/CIFFT module */ 
+		fft_start = machdep_timer_sample();	
+		memcpy(arm_fft_tmp, testInput_f32_10khz,
+				sizeof(arm_fft_tmp));
+		/* arm_fft_tmp used as In/Out parameter,
+		 * modifid inplace */
+		arm_cfft_radix2_f32(&S, arm_fft_tmp); 
+		machdep_timer_sample_and_log(fft_start, "  cmsis-dsp.fft");     
+		machdep_timer_print_logged_samples();
+
+		/* Process the data through the Complex Magnitude Module for 
+		   calculating the magnitude at each bin */ 
+		arm_cmplx_mag_f32(arm_fft_tmp, testOutput, fftSize);
+
+		/* Calculates maxValue and returns corresponding BIN value */
+		arm_max_f32(testOutput, fftSize, &maxValue,
+				&testIndex); 
+		if (testIndex != refIndex) {
+			printf("testIndex: %u (maxValue: %f), refIndex: %u\n", (unsigned)testIndex, maxValue, (unsigned)refIndex);
+			status = ARM_MATH_TEST_FAILURE; 
+		}
+		if (status != ARM_MATH_SUCCESS) { 
+			printf("cmsis-dsp.fft test failed\n");
+			for (;;) {
+				;
+			}
+		} 
+	}
 
     return 0;
 } 
@@ -167,10 +185,9 @@ int main(void)
  /** \endlink */ 
  
  
+#if 0
 /*
  * Dummy function to avoid compiler error
  */
 void _init() { }
-
-
- 
+#endif

@@ -7,15 +7,15 @@ FLOAT_TYPE=hard
 
 ###################################################
 
-BINPATH=~/gcc-arm-none-eabi-4_7-2013q1/bin
+BINPATH=/opt/gcc-arm-none-eabi-4_8-2014q2/bin
 CC=$(BINPATH)/arm-none-eabi-gcc
 OBJCOPY=$(BINPATH)/arm-none-eabi-objcopy
 SIZE=$(BINPATH)/arm-none-eabi-size
 
 ###################################################
 
-CFLAGS  = -std=gnu99 -O2 -g -Wall -Tstm32_flash.ld -DSTM32F4XX -DCORTEX_M4
-CFLAGS += -mlittle-endian -mthumb -mthumb-interwork -nostartfiles -mcpu=cortex-m4
+CFLAGS  = -std=gnu99 -O2 -g -Wall -Tstm32_flash.ld -DSTM32F429_439xx -DCORTEX_M4
+CFLAGS += -mlittle-endian -mthumb -mthumb-interwork -mcpu=cortex-m4
 
 ifeq ($(FLOAT_TYPE), hard)
 CFLAGS += -fsingle-precision-constant -Wdouble-promotion
@@ -31,7 +31,7 @@ endif
 
 PERIPHLIBURL    = http://www.st.com/st-web-ui/static/active/en/st_prod_software_internet/resource/technical/software/firmware/
 PERIPHLIBZIP    = stm32f4_dsp_stdperiph_lib.zip
-PERIPHLIBVER	= V1.1.0
+PERIPHLIBVER	= V1.4.0
 PERIPHLIBNAME	= STM32F4xx_DSP_StdPeriph_Lib
 PERIPHLIBDIR	= $(PERIPHLIBNAME)_$(PERIPHLIBVER)
 CMSIS		= $(PERIPHLIBDIR)/Libraries/CMSIS
@@ -48,6 +48,7 @@ CFLAGS		+= -DARM_MATH_CM4
 # Sources
 
 SRCS = main.c gdb_stdio.c stm32f4_timer.c system_stm32f4xx.c
+SRCS += stm32f4_codec2_it.c
 
 # Codec 2
 
@@ -100,7 +101,7 @@ LIBPATHS =
 
 # Libraries to link
 
-LIBS = libstm32f4.a -lg -lnosys -lm
+LIBS = libstm32f4.a -lg --specs=rdimon.specs --specs=nano.specs -u _printf_float -lm
 
 # startup file
 
@@ -110,7 +111,7 @@ OBJS = $(SRCS:.c=.o)
 
 ###################################################
 
-all: libstm32f4.a $(PROJ_NAME).elf fft_test.elf dac_ut.elf dac_play.elf adc_rec.elf pwm_ut.elf power_ut.elf
+all: libstm32f4.a $(PROJ_NAME).elf fft_test.elf dac_ut.elf dac_play.elf adc_rec.elf pwm_ut.elf
 
 dl/$(PERIPHLIBZIP):
 	mkdir -p dl
@@ -208,8 +209,13 @@ $(CODEC2_SRC)/dump.c
 power_ut.elf: $(POWER_UT_SRCS)
 	$(CC) $(CFLAGS) $^ -o $@ $(LIBPATHS) $(LIBS)
 
+.PHONY: tags
+tags:
+	ctags -R ..
+
 clean:
 	rm -f *.o
 	rm -f *.elf
 	rm -f libstm32f4.a	
 	find $(PERIPHLIBDIR) -type f -name '*.o' -exec rm {} \;
+	rm -f tags

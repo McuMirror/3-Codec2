@@ -30,6 +30,9 @@
 #include "machdep.h"
 #include "gdb_stdio.h"
 
+#include <stdint.h>
+#include "system_stm32f4xx.h"
+
 volatile unsigned int *DWT_CYCCNT   = (volatile unsigned int *)0xE0001004; 
 volatile unsigned int *DWT_CONTROL  = (volatile unsigned int *)0xE0001000;
 volatile unsigned int *SCB_DEMCR    = (volatile unsigned int *)0xE000EDFC;
@@ -69,7 +72,7 @@ unsigned int machdep_timer_sample_and_log(unsigned int start, char s[])
     char tmp[80];
 
     unsigned int dwt = *DWT_CYCCNT - start;
-    sprintf(tmp, "%s %5.2f msecs\n",s,1000.0*(float)dwt/CORE_CLOCK);
+    sprintf(tmp, "%s %5.2f msecs\n",s,(double)(1000.0F*(float)dwt/((float)SystemCoreClock)));
     if ((strlen(buf) + strlen(tmp)) < BUF_SZ)
         strcat(buf, tmp);
     return *DWT_CYCCNT;
@@ -77,6 +80,6 @@ unsigned int machdep_timer_sample_and_log(unsigned int start, char s[])
 
 void machdep_timer_print_logged_samples(void)
 {
-    gdb_stdio_printf("%s", buf);
+    printf("%s", buf);
     *buf = 0;
 }

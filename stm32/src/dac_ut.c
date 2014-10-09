@@ -43,7 +43,7 @@ short aSine[] = {
 };
 
 int main(void) {
-    int i;
+    //int i;
 
     //for(i=0; i<32; i++)
     //    aSine[i] /= 2;
