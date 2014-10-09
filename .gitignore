@@ -1,0 +1,18 @@
+build/
+build_dump_file/
+*.elf
+*.o
+core.*
+
+# vim
+*.swo
+*.swp
+
+.gdb_history
+
+stm32/STM32F4xx_DSP_StdPeriph_Lib_V*
+stm32/dl/
+stm32/libstm32f4.a
+stm32/openocd.gdb
+stm32/stlink.gdb
+tags
